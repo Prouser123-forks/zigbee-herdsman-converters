@@ -1204,6 +1204,37 @@ const converters = {
             await entity.read('hvacThermostat', ['systemMode']);
         },
     },
+    hive_thermostat_system_mode: {
+        key: ['hive_system_mode'],
+        convertSet: async (entity, key, value, meta) => {
+            switch (key) {
+                case 'heat':
+                    // do heating shit
+                    /**
+                     * {
+   "system_mode":"heat",
+   "temperature_setpoint_hold":"1",
+   "occupied_heating_setpoint":"20"
+}
+                     */
+                    await converters.thermostat_occupied_heating_setpoint(entity, undefined, 20, undefined);
+                    await converters.thermostat_temperature_setpoint_hold(entity, undefined, 1, undefined)
+                case 'emergency_heating':
+                    // do boost shit
+                default:
+                    // dont need to do anything special
+            }
+            let systemMode = utils.getKey(constants.thermostatSystemModes, value, undefined, Number);
+            if (systemMode === undefined) {
+                systemMode = utils.getKey(legacy.thermostatSystemModes, value, value, Number);
+            }
+            await entity.write('hvacThermostat', {systemMode});
+            return {readAfterWriteTime: 250, state: {system_mode: value}};
+        },
+        convertGet: async (entity, key, meta) => {
+            await entity.read('hvacThermostat', ['systemMode']);
+        },
+    },
     thermostat_control_sequence_of_operation: {
         key: ['control_sequence_of_operation'],
         convertSet: async (entity, key, value, meta) => {
