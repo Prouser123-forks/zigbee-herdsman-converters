@@ -231,7 +231,7 @@ module.exports = [
         vendor: 'Hive',
         description: 'Heating thermostat',
         fromZigbee: [fz.thermostat, fz.thermostat_weekly_schedule],
-        toZigbee: [tz.thermostat_local_temperature, c.hive_thermostat_system_mode, tz.thermostat_running_state,
+        toZigbee: [tz.thermostat_local_temperature, tz.hive_thermostat_system_mode, tz.thermostat_running_state,
             tz.thermostat_occupied_heating_setpoint, tz.thermostat_control_sequence_of_operation, tz.thermostat_weekly_schedule,
             tz.thermostat_clear_weekly_schedule, tz.thermostat_temperature_setpoint_hold, tz.thermostat_temperature_setpoint_hold_duration],
         exposes: [
