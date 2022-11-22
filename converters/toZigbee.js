@@ -1234,11 +1234,10 @@ const converters = {
                     await entity.write('hvacThermostat', {
                         occupiedHeatingSetpoint,
                         tempSetpointHold: 1,
-                        tempSetpointHoldDuration: 30, // Minimum duration of 30 mins. Values below 30 are set to 30 by the thermostat.
+                        tempSetpointHoldDuration: 30, // Thermostat defaults to a minimum of 30mins.
                         systemMode
                     });
                     return {readAfterWriteTime: 250, state: {system_mode: value, occupied_heating_setpoint: occupiedHeatingSetpoint/100}}
-                // TBD: auto (scheduled)
                 default:
                     // No special message needed, just send systemMode.
                     await entity.write('hvacThermostat', { systemMode });
