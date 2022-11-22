@@ -1211,6 +1211,8 @@ const converters = {
             if (systemMode === undefined) {
                 systemMode = utils.getKey(legacy.thermostatSystemModes, value, value, Number);
             }
+
+            const occupiedHeatingSetpoint = 2000; // 20.00°C - When selecting manual (heat), the hive always selects this temperature.
             switch (value) {
                 case 'off':
                     // Send a message that matches what the thermostat remote control sends
@@ -1220,7 +1222,6 @@ const converters = {
                         systemMode
                     });
                 case 'heat':
-                    occupiedHeatingSetpoint = 2000; // 20.00°C - When selecting manual (heat), the hive always selects this temperature.
                     // Send a message that matches what the thermostat remote control sends
                     await entity.write('hvacThermostat', {
                         occupiedHeatingSetpoint,
@@ -1230,7 +1231,6 @@ const converters = {
                     });
                     return { readAfterWriteTime: 250, state: { system_mode: value, occupied_heating_setpoint: occupiedHeatingSetpoint / 100 } };
                 case 'emergency_heating':
-                    occupiedHeatingSetpoint = 2000; // Default hive temperature
                     await entity.write('hvacThermostat', {
                         occupiedHeatingSetpoint,
                         tempSetpointHold: 1,
@@ -1238,7 +1238,7 @@ const converters = {
                         systemMode
                     });
                     return {readAfterWriteTime: 250, state: {system_mode: value, occupied_heating_setpoint: occupiedHeatingSetpoint/100}}
-                // TBD: emergency_heating, auto (scheduled)
+                // TBD: auto (scheduled)
                 default:
                     // No special message needed, just send systemMode.
                     await entity.write('hvacThermostat', { systemMode });
