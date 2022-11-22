@@ -1205,31 +1205,45 @@ const converters = {
         },
     },
     hive_thermostat_system_mode: {
-        key: ['hive_system_mode'],
+        key: ['system_mode'],
         convertSet: async (entity, key, value, meta) => {
-            switch (key) {
-                case 'heat':
-                    // do heating shit
-                    /**
-                     * {
-   "system_mode":"heat",
-   "temperature_setpoint_hold":"1",
-   "occupied_heating_setpoint":"20"
-}
-                     */
-                    await converters.thermostat_occupied_heating_setpoint(entity, undefined, 20, undefined);
-                    await converters.thermostat_temperature_setpoint_hold(entity, undefined, 1, undefined)
-                case 'emergency_heating':
-                    // do boost shit
-                default:
-                    // dont need to do anything special
-            }
             let systemMode = utils.getKey(constants.thermostatSystemModes, value, undefined, Number);
             if (systemMode === undefined) {
                 systemMode = utils.getKey(legacy.thermostatSystemModes, value, value, Number);
             }
-            await entity.write('hvacThermostat', {systemMode});
-            return {readAfterWriteTime: 250, state: {system_mode: value}};
+            switch (value) {
+                case 'off':
+                    // Send a message that matches what the thermostat remote control sends
+                    await entity.write('hvacThermostat', {
+                        tempSetpointHold: 0,
+                        tempSetpointHoldDuration: 0,
+                        systemMode
+                    });
+                case 'heat':
+                    occupiedHeatingSetpoint = 2000; // 20.00°C - When selecting manual (heat), the hive always selects this temperature.
+                    // Send a message that matches what the thermostat remote control sends
+                    await entity.write('hvacThermostat', {
+                        occupiedHeatingSetpoint,
+                        tempSetpointHold: 1,
+                        tempSetpointHoldDuration: 65535, // The thermostat will set this anyway, saves a message if we do it here (?)
+                        systemMode
+                    });
+                    return { readAfterWriteTime: 250, state: { system_mode: value, occupied_heating_setpoint: occupiedHeatingSetpoint / 100 } };
+                case 'emergency_heating':
+                    occupiedHeatingSetpoint = 2000; // Default hive temperature
+                    await entity.write('hvacThermostat', {
+                        occupiedHeatingSetpoint,
+                        tempSetpointHold: 1,
+                        tempSetpointHoldDuration: 30, // Minimum duration of 30 mins. Values below 30 are set to 30 by the thermostat.
+                        systemMode
+                    });
+                    return {readAfterWriteTime: 250, state: {system_mode: value, occupied_heating_setpoint: occupiedHeatingSetpoint/100}}
+                // TBD: emergency_heating, auto (scheduled)
+                default:
+                    // No special message needed, just send systemMode.
+                    await entity.write('hvacThermostat', { systemMode });
+                    return { readAfterWriteTime: 250, state: { system_mode: value } };
+            }
         },
         convertGet: async (entity, key, meta) => {
             await entity.read('hvacThermostat', ['systemMode']);
