@@ -25,22 +25,25 @@ const c = {
                     // Send a message that matches what the thermostat remote control sends
                     await entity.write('hvacThermostat', {
                         tempSetpointHold: 0,
+                        tempSetpointHoldDuration: 0,
                         systemMode
                     });
                 case 'heat':
+                    const occupiedHeatingSetpoint = 2000; // 20.00°C - When selecting manual (heat), the hive always selects this temperature.
                     // Send a message that matches what the thermostat remote control sends
                     await entity.write('hvacThermostat', {
-                        occupiedHeatingSetpoint: 2000, // 20.00°C - When selecting manual (heat), the hive always selects this temperature.
+                        occupiedHeatingSetpoint,
                         tempSetpointHold: 1,
                         tempSetpointHoldDuration: 65535, // The thermostat will set this anyway, saves a message if we do it here (?)
                         systemMode
                     });
+                    return { readAfterWriteTime: 250, state: { system_mode: value, occupied_heating_setpoint: occupiedHeatingSetpoint/100 } };
                 // TBD: emergency_heating, auto (scheduled)
                 default:
                     // No special message needed, just send systemMode.
-                    await entity.write('hvacThermostat', {systemMode});
+                    await entity.write('hvacThermostat', { systemMode });
+                    return { readAfterWriteTime: 250, state: { system_mode: value } };
             }
-            return {readAfterWriteTime: 250, state: {system_mode: value}};
         },
         convertGet: async (entity, key, meta) => {
             await entity.read('hvacThermostat', ['systemMode']);
